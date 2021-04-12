@@ -1,4 +1,4 @@
-/* Title: ELECTRONOOBS open source electronic speed controller. 
+/* Title: ELECTRONOOBS open source electronic speed controller.
  * Date: 02/04/2019
  * Version: 3.3
  * Author: http://electronoobs.com
@@ -6,7 +6,7 @@
  * Schematic link: https://www.electronoobs.com/eng_arduino_tut91_sch1.php
  * PCB gerbers: https://www.electronoobs.com/eng_arduino_tut91_gerbers1.php
  * This is a sensorless ESC based on Arduino with the ATmega328 chip. It uses
- * BEMF with the internal comparator of the ATmega328 to detect the rotor position. 
+ * BEMF with the internal comparator of the ATmega328 to detect the rotor position.
  * The speed control is made by a PWM signal. Feel free to change it and improve
  * it however you want
  * Subscribe: http://youtube.com/c/ELECTRONOOBS */
@@ -48,24 +48,65 @@ bool MOTOR_SPINNING = false;
 bool ESC_MODE_ON = false;
 int motor_off_counter = 0;
 bool PWM_RANGE_SET = false;
-unsigned long previousMillis = 0; 
+unsigned long previousMillis = 0;
 unsigned long currentMillis = 0;
 bool full_stop = false;
 
+void ask(const char *msg) {
+    Serial.print(msg);
+    Serial.flush();
+    char c = 0x00;
+    while ('\n' != c) {
+      if (Serial.available() > 0) {
+        c = Serial.read();
+      }
+    }
+}
+
+void testPinFunction() {
+  Serial.println(F("testPinFunction\n"));
+  Serial.println(F("AL=D4, BL=D3, CL=D2, AH=D9, BH=D10, CH=D11 all set to LOW\n"));
+
+  ask("continue with AH_BL?");
+  AH_BL();
+  ask("continue with AH_CL?");
+  AH_BL();
+
+  ask("continue with BH_CL?");
+  BH_CL();
+  ask("continue with BH_AL?");
+  BH_AL();
+
+  ask("continue with CH_AL?");
+  CH_AL();
+  ask("continue with CH_BL?");
+  CH_BL();
+
+  ask("continue with all to LOW?");
+  PORTD = B00000000;      //Set all to LOW
+  TCCR2A =  0;            //OC2A - D11 (CH) normal port.
+  TCCR1A =  0x0;          //OC1B - D10 (BH) and OC1A - D9 (AH) normal port.
+  
+  Serial.println(F("Exit -- Press RESET\n"));
+  Serial.flush();
+  Serial.end();
+  exit(0);
+}
+
 void setup() {
   Serial.begin(9600);
-  Serial.println(F("ESC_BEMF_v3"));
+  Serial.println(F("ESC_BEMF"));
   Serial.println("Uploaded: "  __DATE__  " " __TIME__);
-  
+
   //This will only run once after you upload the code
   if (EEPROM.read(1) != 1)
   {
     Serial.println(F("Init EEPROM with defaults"));
-    EEPROM_writeAnything(PWM_IN_MIN_ADRESS, PWM_IN_MIN);         
-    EEPROM_writeAnything(PWM_IN_MAX_ADRESS, PWM_IN_MAX);  
+    EEPROM_writeAnything(PWM_IN_MIN_ADRESS, PWM_IN_MIN);
+    EEPROM_writeAnything(PWM_IN_MAX_ADRESS, PWM_IN_MAX);
     EEPROM.write(1, 1);
-  }    
-  else { // Load PWM range from EEPROM  
+  }
+  else { // Load PWM range from EEPROM
     EEPROM_readAnything(PWM_IN_MIN_ADRESS, PWM_IN_MIN);
     EEPROM_readAnything(PWM_IN_MAX_ADRESS, PWM_IN_MAX);
     Serial.println(F("Read from EEPROM:"));
@@ -74,7 +115,7 @@ void setup() {
   }
   //#error first time you upload the code make sure the next lien is uncommented. Then, comment back the line and uplaod the code again and delete this entire error line
   //EEPROM.write(1, 0);
-  
+
   //Our pins for the MOSFET drivers are 2,3,4 and 9,10,11
   DDRD  |= B00011100;           //Configure pins 2, 3 and 4 as outputs CL, BL and AL
   PORTD  = B00000000;           //Pins 0 to 7 set to LOW
@@ -84,22 +125,24 @@ void setup() {
   // Timer1
   TCCR1A = 0;
   TCCR1B = 0x01;  // no prescaling
-  
+
   // Timer2
   TCCR2A = 0;
   TCCR2B = 0x01;  // no prescaling
-  
+
+testPinFunction();
+
   // Comparator on pin D6
   ACSR   = 0x10;           // Clear flag comparator interrupt
-  
-  //Set D8 (PWM in) to trigger interrupt (we use this to read PWM input)
-  PCICR  |= (1 << PCIE0);    //enable PCMSK0 scan                                                 
-  PCMSK0 |= (1 << PCINT0);   //Set pin D8 trigger an interrupt on state change. 
 
-  /*Now we detect the PWM input and if is higher than PWM_IN_MIN we enter 
+  //Set D8 (PWM in) to trigger interrupt (we use this to read PWM input)
+  PCICR  |= (1 << PCIE0);    //enable PCMSK0 scan
+  PCMSK0 |= (1 << PCINT0);   //Set pin D8 trigger an interrupt on state change.
+
+  /*Now we detect the PWM input and if is higher than PWM_IN_MIN we enter
   configuration mode and if not, we jump to the void loop*/
   delay(200);
-  
+
   //Power on mode select
   if (PWM_INPUT > PWM_IN_MIN + 115)
   {
@@ -107,36 +150,36 @@ void setup() {
     PWM_RANGE_SET = false;
     ESC_MODE_ON = false;           //Motor rotation is OFF till the config mode is done
     while (!PWM_RANGE_SET)
-    { 
+    {
       currentMillis = millis();
       if (currentMillis - previousMillis >= 500) {  // beep every 500ms with 1KHz
         OCR1A = beeping_PWM_VALUE;
-        previousMillis += 500;    
+        previousMillis += 500;
         TCCR2A = 0;   // OC2A(D11) normal port
         TCCR1A = 0;   // OC1A(D9) and OC1B(D10) normal ports
         beep_1KHz(100);
       }
-      
+
       if (PWM_INPUT > MAX_PWM_TO_STORE) { // save new max value
         MAX_PWM_TO_STORE = PWM_INPUT;
       }
-      
-      if (PWM_INPUT < 1200) {  // close to minimum
+
+      if (PWM_INPUT < PWM_IN_MIN + 115) {  // close to minimum
         if (pwm_set_counter > 1000) { // longer than 1000 cycles in minimum?
           MIN_PWM_TO_STORE = PWM_INPUT; // save current value as minimum
-          
+
           PWM_IN_MIN = MIN_PWM_TO_STORE;
           PWM_IN_MAX = MAX_PWM_TO_STORE;
-        
+
           Serial.println(F("Saving to EEPROM:"));
           Serial.print(F("PWM_IN_MIN = ")); Serial.println(PWM_IN_MIN);
           Serial.print(F("PWM_IN_MAX = ")); Serial.println(PWM_IN_MAX);
-          EEPROM_writeAnything(PWM_IN_MIN_ADRESS, PWM_IN_MIN);         
-          EEPROM_writeAnything(PWM_IN_MAX_ADRESS, PWM_IN_MAX); 
-          
+          EEPROM_writeAnything(PWM_IN_MIN_ADRESS, PWM_IN_MIN);
+          EEPROM_writeAnything(PWM_IN_MAX_ADRESS, PWM_IN_MAX);
+
           ESC_MODE_ON = true;
           PWM_RANGE_SET = true;
-          
+
           TCCR2A = 0;   // OC2A(D11) normal port
           TCCR1A = 0;   // OC1A(D9) and OC1B(D10) normal ports
 
@@ -151,7 +194,7 @@ void setup() {
         delay(1);
       } else {
         pwm_set_counter = 0;
-      }     
+      }
     }//end of !PWM_RANGE_SET
   }
   else {  // If the range is below PWM_IN_MIN+115us then we start the code
@@ -169,7 +212,7 @@ void setup() {
     delay(100);
   }
   OCR1A = 0;
-  
+
   Serial.flush();
   Serial.end();
 }//End of setup loop
@@ -192,7 +235,7 @@ ISR (ANALOG_COMP_vect) {
 }
 
 //Switch to next step functions
-void set_next_step(){        
+void set_next_step(){
   switch(sequence_step){
     case 0:
       AH_BL();
@@ -224,7 +267,7 @@ void set_next_step(){
 
 /*On each step we know that the next 0 cross will be rising or falling and if it will be
 on coil A, B or C. With these funcstions we select that according to the step of the sequence*/
-void BEMF_A_RISING(){  
+void BEMF_A_RISING(){
   ADCSRA = (0 << ADEN);     // Disable the ADC module
   ADCSRB = (1 << ACME);     // MUX select for negative input of comparator
   ADMUX = 2;                // Select A2 as comparator negative input
@@ -261,40 +304,40 @@ void BEMF_C_FALLING(){
   ACSR &= ~0x01;            // Set interrupt on falling edge*/
 }
 
-/*On each step we change the digital pins to be HIGH or LOW or to be PWM or no-PWM 
+/*On each step we change the digital pins to be HIGH or LOW or to be PWM or no-PWM
 depending on which step of the sequence we are*/
-//D9 PWM and D3 HIGH.  
+//D9 PWM and D3 HIGH.
 void AH_BL(){
   PORTD = B00001000;      //Set D3 (BL) to HIGH and the rest to LOW
-  TCCR2A =  0;            //OC2A - D11 normal port. 
+  TCCR2A =  0;            //OC2A - D11 normal port.
   TCCR1A =  0x81;         //OC1A - D9 (AH) compare match noninverting mode, downcounting ,PWM 8-bit
 }
 //D9 PWM and D2 HIGH
 void AH_CL(){
   PORTD = B00000100;      //Set D2 (CL) to HIGH and the rest to LOW
-  TCCR2A =  0;            //OC2A - D11 normal port. 
-  TCCR1A =  0x81;         //OC1A - D9 (AH) compare match noninverting mode, downcounting ,PWM 8-bit  
+  TCCR2A =  0;            //OC2A - D11 normal port.
+  TCCR1A =  0x81;         //OC1A - D9 (AH) compare match noninverting mode, downcounting ,PWM 8-bit
 }
 //D10 PWM and D2 HIGH
 void BH_CL(){
   PORTD = B00000100;      //Set D2 (CL) to HIGH and the rest to LOW
-  TCCR2A =  0;            //OC2A - D11 normal port. 
-  TCCR1A =  0x21;         //OC1B - D10 (BH) compare match noninverting mode, downcounting ,PWM 8-bit 
+  TCCR2A =  0;            //OC2A - D11 normal port.
+  TCCR1A =  0x21;         //OC1B - D10 (BH) compare match noninverting mode, downcounting ,PWM 8-bit
 }
 //D10 PWM and D4 HIGH
-void BH_AL(){  
+void BH_AL(){
   PORTD = B00010000;      //Set D4 (AL) to HIGH and the rest to LOW
-  TCCR2A =  0;            //OC2A - D11 normal port. 
-  TCCR1A =  0x21;         //OC1B - D10 (BH) compare match noninverting mode, downcounting ,PWM 8-bit 
+  TCCR2A =  0;            //OC2A - D11 normal port.
+  TCCR1A =  0x21;         //OC1B - D10 (BH) compare match noninverting mode, downcounting ,PWM 8-bit
 }
 //D11 PWM and D4 HIGH
-void CH_AL(){ 
+void CH_AL(){
   PORTD = B00010000;      //Set D4 (AL) to HIGH and the rest to LOW
   TCCR1A =  0;            // OC1A and OC1B normal port
-  TCCR2A =  0x81;         // OC2A - D11 (CH) compare match noninverting mode, downcounting ,PWM 8-bit  
+  TCCR2A =  0x81;         // OC2A - D11 (CH) compare match noninverting mode, downcounting ,PWM 8-bit
 }
 //D11 PWM and D3 HIGH
-void CH_BL(){  
+void CH_BL(){
   PORTD = B00001000;      //Set D3 (BL) to HIGH and the rest to LOW
   TCCR1A =  0;            // OC1A and OC1B normal port
   TCCR2A =  0x81;         // OC2A - D11 (CH) compare match noninverting mode, downcounting ,PWM 8-bit
@@ -314,16 +357,16 @@ void SET_PWM(byte width_value){
 //main loop
 void loop() {
   /*if PWM input is higher than PWM_IN_MIN + 115 we start the motor*/
-  if(PWM_INPUT > (PWM_IN_MIN + 115) && ESC_MODE_ON)
+  if ((PWM_INPUT > (PWM_IN_MIN + 115)) && ESC_MODE_ON)
   {
-    MOTOR_SPINNING = true;    
+    MOTOR_SPINNING = true;
     full_stop = false;
     motor_off_counter = 0;
   }
 
   //////////////////////////Motor is rotating////////////////////////
-  if(MOTOR_SPINNING)
-  {  
+  if (MOTOR_SPINNING)
+  {
     SET_PWM(PWM_value);     // Setup starting PWM with duty cycle = PWM_START_DUTY
     i = 2200;
     // Motor start
@@ -335,22 +378,23 @@ void loop() {
       i = i - 20;
     }
     motor_speed = PWM_value;
-    ACSR |= 0x08;                    // Enable analog comparator interrupt  
-    while (MOTOR_SPINNING) 
+    ACSR |= 0x08;                    // Enable analog comparator interrupt
+    while (MOTOR_SPINNING)
     {
       PWM_INPUT = constrain(PWM_INPUT, PWM_IN_MIN, PWM_IN_MAX);
       motor_speed = map(PWM_INPUT, PWM_IN_MIN, PWM_IN_MAX, PWM_min_value, PWM_max_value);
       SET_PWM(motor_speed);
       if (PWM_INPUT < (PWM_IN_MIN + 30))
       {
-        if (motor_off_counter > 1000)
+        if (motor_off_counter > 1000) // stop motor
         {
           MOTOR_SPINNING = false;
           motor_off_counter = 0;
-          PORTD = B00000000;      //Set D4 to HIGH and the rest to LOW        
-          TCCR1A =  0;            //OC1A - D9 compare match noninverting mode, downcounting ,PWM 8-bit   
+          PORTD = B00000000;      //Set D2, D3, D4 to to LOW
+          TCCR1A = 0;             //OC1A and OC1B normal port
+          TCCR1B = 0;             //OC2A - D11 normal port.
         }
-        motor_off_counter = motor_off_counter + 1;       
+        motor_off_counter = motor_off_counter + 1;
       }
       //Serial.print(PWM_IN_MIN);Serial.print("    ");Serial.println(PWM_IN_MAX);
       //Serial.println(motor_speed);
@@ -358,10 +402,10 @@ void loop() {
   }//end of if MOTOR_SPINNING
 
   //////////////////////////Motor STOP////////////////////////
-  if(!MOTOR_SPINNING) {      
+  if (!MOTOR_SPINNING) {
     unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= 4000 && !full_stop) {
-      previousMillis += 4000;    
+    if ((currentMillis - previousMillis >= 4000) && !full_stop) {
+      previousMillis += 4000;
       full_stop = true;
    }
 
@@ -371,22 +415,18 @@ void loop() {
        ACSR   = 0x10;            // Disable and clear (flag bit) analog comparator interrupt
        TCCR2A =  0;
        TCCR1A =  0;
-       PORTD  = 0x00;            //pins 0 to 7 set to LOW //stop everything    
-       PORTB  &= 0x31;           //B00110001    D9, D10 and D11 to LOW  
-       OCR1A = beeping_PWM_VALUE; 
-       /*
-       PORTD = B00010000;      //Set D4 to HIGH and the rest to LOW        
-       TCCR1A =  0x81;         //OC1A - D9 compare match noninverting mode, downcounting ,PWM 8-bit          
-       */
+       PORTD  = 0x00;            //pins 0 to 7 set to LOW //stop everything
+       PORTB  &= 0x31;           //B00110001    D9, D10 and D11 to LOW
+       OCR1A = beeping_PWM_VALUE;
        beep_1KHz(100);
      }
    } else {
       ACSR   = 0x10;            // Disable and clear (flag bit) analog comparator interrupt
       TCCR2A =  0;
       TCCR1A =  0;
-      PORTD  = B00000000;            //pins 0 to 7 set to LOW //stop everything    
-      PORTB  = B00000000;           //B00110001    D9, D10 and D11 to LOW           
-   }      
+      PORTD  = B00000000;            //pins 0 to 7 set to LOW //stop everything
+      PORTB  = B00000000;           //B00110001    D9, D10 and D11 to LOW
+   }
   }//end of if !MOTOR_SPINNING
 }//end of void loop
 
@@ -402,7 +442,7 @@ ISR(PCINT0_vect){
       counter_1 = current_count;                     //Set counter_1 to current value.
     }
   }
-  else if(last_PWM_state == 1){                      //If pin 8 is LOW and the last state was HIGH then we have a state change      
+  else if(last_PWM_state == 1){                      //If pin 8 is LOW and the last state was HIGH then we have a state change
     last_PWM_state = 0;                              //Store the current state into the last state for the next loop
     PWM_INPUT = current_count - counter_1;           //We make the time difference. PWM_INPUT is current_time - counter_1 in micro-seconds.
   }
