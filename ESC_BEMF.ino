@@ -59,28 +59,40 @@ void ask(const char *msg) {
     while ('\n' != c) {
       if (Serial.available() > 0) {
         c = Serial.read();
+        Serial.write(c);
       }
     }
 }
 
 void testPinFunction() {
-  Serial.println(F("testPinFunction\n"));
-  Serial.println(F("AL=D4, BL=D3, CL=D2, AH=D9, BH=D10, CH=D11 all set to LOW\n"));
+  Serial.println(F("testPinFunction"));
+  Serial.println(F("AL=D4, BL=D3, CL=D2, AH=D9, BH=D10, CH=D11 all set to LOW"));
 
+  SET_PWM(128);
+  
   ask("continue with AH_BL?");
   AH_BL();
+  Serial.println(F("D3=High, D9=PWM\n"));
+  
   ask("continue with AH_CL?");
-  AH_BL();
+  AH_CL();
+  Serial.println(F("D2=High, D9=PWM\n"));
 
   ask("continue with BH_CL?");
   BH_CL();
+  Serial.println(F("D2=High, D10=PWM\n"));
+
   ask("continue with BH_AL?");
   BH_AL();
+  Serial.println(F("D4=High, D10=PWM\n"));
 
   ask("continue with CH_AL?");
   CH_AL();
+  Serial.println(F("D4=High, D11=PWM\n"));
+
   ask("continue with CH_BL?");
   CH_BL();
+  Serial.println(F("D3=High, D11=PWM\n"));
 
   ask("continue with all to LOW?");
   PORTD = B00000000;      //Set all to LOW
