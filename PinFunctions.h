@@ -28,13 +28,13 @@
    ADCSRA = (0 << ADEN);     // Disable the ADC module
    ADCSRB = (1 << ACME);     // MUX select for negative input of comparator
    ADMUX = 1;                // Select A1 as comparator negative input
-   ACSR &= ~0x01;            // Set interrupt on falling edge*/
+   ACSR &= ~0x01;            // Set interrupt on falling edge
  }
  void BEMF_C_RISING(){
    ADCSRA = (0 << ADEN);     // Disable the ADC module
    ADCSRB = (1 << ACME);     // MUX select for negative input of comparator
    ADMUX = 0;                // Select A0 as comparator negative input
-   ACSR |= 0x03;             // Set interrupt on rising edge
+   ACSR |= 0x13;             // Set interrupt on rising edge and clear ACI
  }
  void BEMF_C_FALLING(){
    ADCSRA = (0 << ADEN);     // Disable the ADC module

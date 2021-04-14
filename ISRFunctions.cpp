@@ -39,15 +39,13 @@ ISR(PCINT0_vect) {
  * Interrumption vector for the Analog comparator
  */
 ISR (ANALOG_COMP_vect) {
-  for(int i=0; i<10; i++) {           //We check the comparator 10 times just to be sure
-    if(sequence_step & 1)             //If step = odd (0001, 0011, 0101) 1, 3 or 5
-    {
-      if(!(ACSR & B00100000)) i -= 1; //!B00100000 -> B11011111 ACO = 0 (Analog Comparator Output = 0)
-    }
-    else                              //else if step is 0, 2 or 4
-    {
-      if((ACSR & B00100000))  i -= 1; //else if B00100000 -> B11011111 ACO = 1 (Analog Comparator Output = 1)
+  for (int i=0; i<10; i++) {           //We check the comparator 10 times just to be sure
+    if (sequence_step & 1) {           // If step is odd (IRQ on falling BEMF), ACO should be 1
+      if (!(ACSR & B00100000)) i -= 1; //!B00100000 -> B11011111 ACO = 0 (Analog Comparator Output = 0)
+    } else {                           // If step is even (IRQ on rising BEMF), ACO should be 0
+      if ( (ACSR & B00100000)) i -= 1; //else if B00100000 -> B11011111 ACO = 1 (Analog Comparator Output = 1)
     }
   }
-  set_next_step();                    //set the next step of the sequence
+Serial.print("IRQ for seq="); Serial.println(sequence_step);
+///  set_next_step();                    //set the next step of the sequence
 }

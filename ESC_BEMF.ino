@@ -13,7 +13,7 @@
  */
 #define PWM_max_value      255
 #define PWM_min_value      30
-#define beeping_PWM_VALUE  100;
+#define beeping_PWM_VALUE  100
 
 #include "PinFunctions.h"
 #include "EEPROMAnything.h"         //This is used to store more than just one byte to the EEPROM
@@ -88,7 +88,9 @@ void setup() {
   TCCR2B = 0x01;  // no prescaling
 
 #ifdef TEST_FUNCTIONS
-  testPinFunction();
+//  testPinFunction();
+  ACSR  = 0x10;           // Clear flag comparator interrupt
+  ACSR |= 0x08;           // Enable analog comparator interrupt
   testRotationSteps();
   
   Serial.println(F("Exit -- Press RESET\n"));
@@ -184,6 +186,7 @@ void setup() {
 
 //Switch to next step functions
 void set_next_step(){
+  Serial.print(F("set_next_step: ")); Serial.println(sequence_step);
   switch(sequence_step){
     case 0:
       AH_BL();

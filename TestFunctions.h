@@ -61,29 +61,29 @@ void testRotationSteps() {
   SET_PWM(128);
   sequence_step = 0;
   
-  ask("continue with step 0 - AH/BL, CL rising?");
+  ask("continue with step 0 - AH/BL, C rising?");
   set_next_step();
-  Serial.println(F("D3=High, D9=PWM"));
+  Serial.println(F("D3=High, D9=PWM, A0 rising\n"));
 
-  ask("continue with step 1 - AH/CL, BL falling?");
+  ask("continue with step 1 - AH/CL, B falling?");
   set_next_step();
-  Serial.println(F("D2=High, D9=PWM\n"));
+  Serial.println(F("D2=High, D9=PWM, A1 falling\n"));
 
-  ask("continue with step 2 - BH/CL, AL rising?");
+  ask("continue with step 2 - BH/CL, A rising?");
   set_next_step();
-  Serial.println(F("D2=High, D10=PWM\n"));
+  Serial.println(F("D2=High, D10=PWM, A2 rising\n"));
 
-  ask("continue with step 3 - BH/AL, CL falling?");
+  ask("continue with step 3 - BH/AL, C falling?");
   set_next_step();
-  Serial.println(F("D4=High, D10=PWM\n"));
+  Serial.println(F("D4=High, D10=PWM, A0 falling\n"));
 
-  ask("continue with step 4 - CH/AL, BL rising?");
+  ask("continue with step 4 - CH/AL, B rising?");
   set_next_step();
-  Serial.println(F("D4=High, D11=PWM\n"));
+  Serial.println(F("D4=High, D11=PWM, A1 rising\n"));
 
-  ask("continue with step 5 - CH/BL, AL falling?");
+  ask("continue with step 5 - CH/BL, A falling?");
   set_next_step();
-  Serial.println(F("D3=High, D11=PWM\n"));
+  Serial.println(F("D3=High, D11=PWM, A2 falling\n"));
 
   ask("continue with all to LOW?");
   PORTD = B00000000;      //Set all to LOW
