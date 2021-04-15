@@ -24,26 +24,26 @@ ISR(PCINT0_vect) {
   unsigned long current_count = micros();
   ///////////////////////////////////////Channel 1
   if(PINB & B00000001){                              //We make an AND with the pin state register, We verify if pin 8 is HIGH???
-    if(last_PWM_state == 0){                         //If the last state was 0, then we have a state change...
+    if(last_PWM_state == 0) {                        //If the last state was 0, then we have a state change...
       last_PWM_state = 1;                            //Store the current state into the last state for the next loop
       counter_1 = current_count;                     //Set counter_1 to current value.
     }
   }
-  else if(last_PWM_state == 1){                      //If pin 8 is LOW and the last state was HIGH then we have a state change
+  else if(last_PWM_state == 1) {                     //If pin 8 is LOW and the last state was HIGH then we have a state change
     last_PWM_state = 0;                              //Store the current state into the last state for the next loop
     PWM_INPUT = current_count - counter_1;           //We make the time difference. PWM_INPUT is current_time - counter_1 in micro-seconds.
   }
 }
 
-/* 
+/*
  * Interrumption vector for the Analog comparator
  */
 ISR (ANALOG_COMP_vect) {
   for (int i=0; i<10; i++) {           //We check the comparator 10 times just to be sure
     if (sequence_step & 1) {           // If step is odd (IRQ on falling BEMF), ACO should be 1
-      if (!(ACSR & B00100000)) i -= 1; //!B00100000 -> B11011111 ACO = 0 (Analog Comparator Output = 0)
+      if (0 == (ACSR & B00100000)) i -= 1; //!B00100000 -> B11011111 ACO = 0 (Analog Comparator Output = 0)
     } else {                           // If step is even (IRQ on rising BEMF), ACO should be 0
-      if ( (ACSR & B00100000)) i -= 1; //else if B00100000 -> B11011111 ACO = 1 (Analog Comparator Output = 1)
+      if (0 != (ACSR & B00100000)) i -= 1; //else if B00100000 -> B11011111 ACO = 1 (Analog Comparator Output = 1)
     }
   }
 Serial.print("IRQ for seq="); Serial.println(sequence_step);

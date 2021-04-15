@@ -57,31 +57,32 @@ void testPinFunction() {
 void testRotationSteps() {
   Serial.println(F("testRotationSteps"));
   Serial.println(F("AL=D4, BL=D3, CL=D2, AH=D9, BH=D10, CH=D11 all set to LOW"));
+  Serail.println(F("Set AIN0=D6 to 3,3V"));
 
   SET_PWM(128);
   sequence_step = 0;
-  
-  ask("continue with step 0 - AH/BL, C rising?");
+
+  ask("continue with step 0? - AH/BL, C rising - set A0 to LOW, A1 to HIGH");
   set_next_step();
   Serial.println(F("D3=High, D9=PWM, A0 rising\n"));
 
-  ask("continue with step 1 - AH/CL, B falling?");
+  ask("continue with step 1? - AH/CL, B falling - set A1 to HIGH, A2 to LOW");
   set_next_step();
   Serial.println(F("D2=High, D9=PWM, A1 falling\n"));
 
-  ask("continue with step 2 - BH/CL, A rising?");
+  ask("continue with step 2? - BH/CL, A rising - set A2 to LOW, A0 to HIGH");
   set_next_step();
   Serial.println(F("D2=High, D10=PWM, A2 rising\n"));
 
-  ask("continue with step 3 - BH/AL, C falling?");
+  ask("continue with step 3? - BH/AL, C falling - set A0 to HIGH, A1 to LOW");
   set_next_step();
   Serial.println(F("D4=High, D10=PWM, A0 falling\n"));
 
-  ask("continue with step 4 - CH/AL, B rising?");
+  ask("continue with step 4? - CH/AL, B rising - set A1 to LOW, A2 to HIGH");
   set_next_step();
   Serial.println(F("D4=High, D11=PWM, A1 rising\n"));
 
-  ask("continue with step 5 - CH/BL, A falling?");
+  ask("continue with step 5? - CH/BL, A falling - set A2 to HIGH, A0 to LOW");
   set_next_step();
   Serial.println(F("D3=High, D11=PWM, A2 falling\n"));
 

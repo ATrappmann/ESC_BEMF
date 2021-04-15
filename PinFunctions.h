@@ -10,13 +10,13 @@
    ADCSRA = (0 << ADEN);     // Disable the ADC module
    ADCSRB = (1 << ACME);     // MUX select for negative input of comparator
    ADMUX = 2;                // Select A2 as comparator negative input
-   ACSR |= 0x03;             // Set interrupt on rising edge*/
+   ACSR |= 0x03;             // Set interrupt on rising edge
  }
  void BEMF_A_FALLING(){
    ADCSRA = (0 << ADEN);     // Disable the ADC module
    ADCSRB = (1 << ACME);     // MUX select for negative input of comparator
    ADMUX = 2;                // Select A2 as comparator negative input
-   ACSR &= ~0x01;            // Set interrupt on falling edge*/
+   ACSR &= ~0x01;            // Set interrupt on falling edge
  }
  void BEMF_B_RISING(){
    ADCSRA = (0 << ADEN);     // Disable the ADC module
@@ -34,13 +34,13 @@
    ADCSRA = (0 << ADEN);     // Disable the ADC module
    ADCSRB = (1 << ACME);     // MUX select for negative input of comparator
    ADMUX = 0;                // Select A0 as comparator negative input
-   ACSR |= 0x13;             // Set interrupt on rising edge and clear ACI
+/**/   ACSR |= 0x13;             // Set interrupt on rising edge and clear ACI
  }
  void BEMF_C_FALLING(){
    ADCSRA = (0 << ADEN);     // Disable the ADC module
    ADCSRB = (1 << ACME);     // MUX select for negative input of comparator
    ADMUX = 0;                // Select A0 as comparator negative input
-   ACSR &= ~0x01;            // Set interrupt on falling edge*/
+   ACSR &= ~0x01;            // Set interrupt on falling edge
  }
 
  /*
@@ -84,7 +84,7 @@
    TCCR2A =  0x81;         // OC2A - D11 (CH) compare match noninverting mode, downcounting ,PWM 8-bit
  }
 
- /* 
+ /*
   * This function will only change the PWM values according to the received width_value
   * that is given by the PWM read on pin D8
   */
