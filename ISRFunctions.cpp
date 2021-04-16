@@ -36,14 +36,20 @@ ISR(PCINT0_vect) {
 }
 
 /*
- * Interrumption vector for the Analog comparator
+ * Interrupt vector for the Analog Comparator (AC)
+ * Def: AC Output (ACO) is 1, if voltage on positive input pin of AC (=AIN0) is
+ *      higher than voltage on negative input pin (=AIN1).
+ * AIN0(=D6) is tied to common ground of all 3 phases.
+ * AIN1(multiplexed) to: A2 for phase A, A1 for phase B, A0 for phase C
+ * To detect a  rising BEMF, AIN1 goes above common ground (AIN0 < AIN1), so ACO is 0.
+ * To detect a falling BEMF, AIN1 goes below common ground (AIN0 > AIN1), so ACO is 1.
  */
 ISR (ANALOG_COMP_vect) {
-  for (int i=0; i<10; i++) {           //We check the comparator 10 times just to be sure
-    if (sequence_step & 1) {           // If step is odd (IRQ on falling BEMF), ACO should be 1
-      if (0 == (ACSR & B00100000)) i -= 1; //!B00100000 -> B11011111 ACO = 0 (Analog Comparator Output = 0)
-    } else {                           // If step is even (IRQ on rising BEMF), ACO should be 0
-      if (0 != (ACSR & B00100000)) i -= 1; //else if B00100000 -> B11011111 ACO = 1 (Analog Comparator Output = 1)
+  for (int i=0; i<10; i++) {                // We check the comparator 10 times just to be sure
+    if (sequence_step & 1) {                // If step is odd (IRQ on falling BEMF), ACO should be 1
+      if (0 == (ACSR & B00100000)) i -= 1;  // ACO = 0 (Analog Comparator Output = 0), try again
+    } else {                                // If step is even (IRQ on rising BEMF), ACO should be 0
+      if (0 != (ACSR & B00100000)) i -= 1;  // ACO = 1 (Analog Comparator Output = 1), try again
     }
   }
 Serial.print("IRQ for seq="); Serial.println(sequence_step);
