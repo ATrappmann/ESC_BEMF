@@ -17,6 +17,7 @@ void setup() {
   Serial.println(F("D2 will toggle every 2s"));
 
   pinMode(2, OUTPUT);
+  Serial.print(F("state=")); Serial.println(state); Serial.flush();
   digitalWrite(2, state);  // ACO=0
   delay(5000);
 
@@ -34,7 +35,7 @@ void loop() {
 
   // toggle state
   state = !state;
-  Serial.print(F("state=")); Serial.println(state); Serial.flush();
+  Serial.print(F("\nstate=")); Serial.print(state); Serial.flush();
   digitalWrite(2, state);
 
   /*
@@ -54,23 +55,18 @@ void loop() {
  *      higher than voltage on negative input pin (=AIN1).
  * AIN0(=D6) is tied to common ground of all 3 phases.
  * AIN1(multiplexed) to: A2 for phase A, A1 for phase B, A0 for phase C
- * To detect a  rising BEMF, AIN1 goes above common ground (AIN0 < AIN1), so ACO is 0.
- * To detect a falling BEMF, AIN1 goes below common ground (AIN0 > AIN1), so ACO is 1.
+ * To detect a  rising edge, AIN1 has to go below common ground (AIN0 > AIN1), so ACO is 1. This is for a falling BEMF signal (1->0).
+ * To detect a falling edge, AIN1 has to go above common ground (AIN0 < AIN1), so ACO is 0. This is for a rising BEMF signal (0->1).
  */
 ISR (ANALOG_COMP_vect) {
   Serial.print("*");
-
   for (int i=0; i<10; i++) {            // We check the comparator 10 times just to be sure
-    if (0 != (ACSR & 0x01)) {           // If step is with IRQ on rising BEMF, ACO should be 0
-      if (0 != (ACSR & (1<<ACO))) {     // If ACO is 1, check again
-        --i;
-        Serial.print("#"); Serial.println(ACSR, BIN);
-      }
-    } else {                            // If step is with IRQ on falling BEMF, ACO should be 1
-      if (0 == (ACSR & (1<<ACO))) {     // If ACO is 0, check again
-        --i;
-        Serial.print("+"); Serial.println(ACSR, BIN);
-      }
+    if (0 != (ACSR & 0x01)) {           // If step is with IRQ on rising edge, ACO should be 1
+      if (0 == (ACSR & (1<<ACO))) --i;  // If ACO is 0, check again
+      Serial.print("#"); Serial.println(ACSR, BIN);
+    } else {                            // If step is with IRQ on falling edge, ACO should be 0
+      if (0 != (ACSR & (1<<ACO))) --i;  // If ACO is 1, check again
+      Serial.print("+"); Serial.println(ACSR, BIN);
     }
   }
 
