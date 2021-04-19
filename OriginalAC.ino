@@ -7,6 +7,8 @@
 
 #define STATE_PIN   2
 bool state = HIGH;
+int sequence_step = 0;
+int i;
 
 void setup() {
   Serial.begin(9600);
@@ -23,8 +25,10 @@ void setup() {
   delay(5000);
 
   // Comparator on pin D6
+  DIDR1 |= (1<<AIN0D);          // Disable digital input buffer for AIN0
   ACSR  = 0x10;                 // Clear flag comparator interrupt
   BEMF_C_RISING();
+  sequence_step++;
   ACSR |= 0x08;                 // Enable analog comparator interrupt
 }
 

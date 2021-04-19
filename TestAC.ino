@@ -22,6 +22,7 @@ void setup() {
   digitalWrite(STATE_PIN, state);  // state=HIGH -> AIN1>AIN0 => ACO=0
   delay(5000);
 
+  DIDR1 |= (1<<AIN0D);      // Disable digital input buffer for AIN0
   ADCSRA = (0 << ADEN);     // Disable the ADC module
   ADCSRB = (1 << ACME);     // MUX select for negative input of comparator
   ADMUX = 0;                // Select A0 as comparator negative input
@@ -52,14 +53,15 @@ void loop() {
  * -> This is for detecting a rising BEMF signal.
  */
 ISR (ANALOG_COMP_vect) {
+  byte acStatus = ACSR;
   Serial.print("*");
   for (int i=0; i<10; i++) {            // We check the comparator 10 times just to be sure
-    if (0 != (ACSR & 0x01)) {           // If step is with IRQ on rising edge, ACO should be 1
-      if (0 == (ACSR & (1<<ACO))) --i;  // If ACO is 0, check again
-      Serial.print("\\_"); Serial.println(ACSR, BIN);
+    if (0 != (acStatus & 0x01)) {           // If step is with IRQ on rising edge, ACO should be 1
+      if (0 == (acStatus & (1<<ACO))) --i;  // If ACO is 0, check again
+      Serial.print("\\_"); Serial.println(acStatus, BIN); Serial.flush();
     } else {                            // If step is with IRQ on falling edge, ACO should be 0
-      if (0 != (ACSR & (1<<ACO))) --i;  // If ACO is 1, check again
-      Serial.print("/^"); Serial.println(ACSR, BIN);
+      if (0 != (acStatus & (1<<ACO))) --i;  // If ACO is 1, check again
+      Serial.print("/^"); Serial.println(acStatus, BIN); Serial.flush();
     }
   }
 
