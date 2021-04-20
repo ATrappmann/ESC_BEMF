@@ -11,8 +11,6 @@
  * it however you want
  * Subscribe: http://youtube.com/c/ELECTRONOOBS
  */
-#define PWM_max_value      255
-#define PWM_min_value      30
 #define beeping_PWM_VALUE  100
 
 #include "PinFunctions.h"

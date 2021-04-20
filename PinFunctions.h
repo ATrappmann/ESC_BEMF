@@ -2,6 +2,9 @@
  * NAME: PinFunctions.h
  */
 
+#define PWM_max_value      255
+#define PWM_min_value      30
+
  /*
   * On each step we know that the next 0 cross will be rising or falling and if it will be
   * on coil A, B or C. With these funcstions we select that according to the step of the sequence
@@ -34,7 +37,7 @@
    ADCSRA = (0 << ADEN);     // Disable the ADC module
    ADCSRB = (1 << ACME);     // MUX select for negative input of comparator
    ADMUX = 0;                // Select A0 as comparator negative input
-/**/   ACSR |= 0x13;             // Set interrupt on rising edge and clear ACI
+   ACSR |= 0x03;             // Set interrupt on rising edge and clear ACI
  }
  void BEMF_C_FALLING(){
    ADCSRA = (0 << ADEN);     // Disable the ADC module
