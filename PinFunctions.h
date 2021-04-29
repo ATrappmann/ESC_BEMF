@@ -92,9 +92,12 @@
   * that is given by the PWM read on pin D8
   */
 void SET_PWM(byte width_value) {
+  Serial.print(F("SET_PWM(")); Serial.print(width_value); Serial.print(") -> "); 
+  Serial.flush();
   //We keep the range of PWM between min and max (8 bit value)
   if(width_value < PWM_min_value)    width_value  = PWM_min_value;
   if(width_value > PWM_max_value)    width_value  = PWM_max_value;
+  Serial.println(width_value);
   OCR1A  = width_value;                   // Set pin 9  PWM duty cycle
   OCR1B  = width_value;                   // Set pin 10 PWM duty cycle
   OCR2A  = width_value;                   // Set pin 11 PWM duty cycle

@@ -45,7 +45,7 @@ void setup() {
   TCCR2A = 0;     // OC2A(D11) normal port
   TCCR2B = 0x01;  // no prescaling
 
-  // Define PWM signal (50% duty-cycle)
+  // Define default PWM signal (50% duty-cycle) if no signal on D8
   SET_PWM(128);
 
   Serial.println(F("Check all pins for inactive signals"));
@@ -238,15 +238,14 @@ void testStep(const int step) {
  * -> This is for detecting a rising BEMF signal.
  */
 ISR (ANALOG_COMP_vect) {
-  byte acStatus = ACSR;
   Serial.print("*");
   for (int i=0; i<10; i++) {                // We check the comparator 10 times just to be sure
-    if (0 != (acStatus & 0x01)) {           // If step is with IRQ on rising edge, ACO should be 1
-      if (0 == (acStatus & (1<<ACO))) --i;  // If ACO is 0, check again
-      Serial.print("\\_"); Serial.println(acStatus, BIN); Serial.flush();
+    if (0 != (ACSR & 0x01)) {               // If step is with IRQ on rising edge, ACO should be 1
+      if (0 == (ACSR & (1<<ACO))) --i;      // If ACO is 0, check again
+      Serial.print(i); Serial.print("\\_"); Serial.println(ACSR, BIN); Serial.flush();
     } else {                                // If step is with IRQ on falling edge, ACO should be 0
-      if (0 != (acStatus & (1<<ACO))) --i;  // If ACO is 1, check again
-      Serial.print("/^"); Serial.println(acStatus, BIN); Serial.flush();
+      if (0 != (ACSR & (1<<ACO))) --i;      // If ACO is 1, check again
+      Serial.print(i); Serial.print("/^"); Serial.println(ACSR, BIN); Serial.flush();
     }
   }
 }

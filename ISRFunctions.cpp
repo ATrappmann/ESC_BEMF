@@ -6,11 +6,11 @@
 #include <Arduino.h>
 
 // We create variables for the time width value of the PWM input signal
-volatile unsigned long counter_1;
-volatile byte last_PWM_state;
+volatile unsigned long counter_1 = 0L;
+volatile byte last_PWM_state = 0;
 
 // To store the 1000us to 2000us value we create variables
-volatile int PWM_INPUT;      //In my case PWM_IN pin is D8 of the Arduino
+volatile int PWM_INPUT = 0;      //In my case PWM_IN pin is D8 of the Arduino
 
 extern byte sequence_step;
 extern void set_next_step();
