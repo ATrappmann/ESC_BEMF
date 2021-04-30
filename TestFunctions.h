@@ -57,7 +57,7 @@ void testPinFunction() {
 void testRotationSteps() {
   Serial.println(F("testRotationSteps"));
   Serial.println(F("AL=D4, BL=D3, CL=D2, AH=D9, BH=D10, CH=D11 all set to LOW"));
-  Serail.println(F("Set AIN0=D6 to 3,3V"));
+  Serial.println(F("Set AIN0=D6 to 3,3V"));
 
   SET_PWM(128);
   sequence_step = 0;

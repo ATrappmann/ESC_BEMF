@@ -53,14 +53,13 @@ void loop() {
  * -> This is for detecting a rising BEMF signal.
  */
 ISR (ANALOG_COMP_vect) {
-  byte acStatus = ACSR;
   Serial.print("*");
   for (int i=0; i<10; i++) {            // We check the comparator 10 times just to be sure
-    if (0 != (acStatus & 0x01)) {           // If step is with IRQ on rising edge, ACO should be 1
-      if (0 == (acStatus & (1<<ACO))) --i;  // If ACO is 0, check again
+    if (0 != (ACSR & 0x01)) {           // If step is with IRQ on rising edge, ACO should be 1
+      if (0 == (ACSR & (1<<ACO))) --i;  // If ACO is 0, check again
       Serial.print("\\_"); Serial.println(acStatus, BIN); Serial.flush();
     } else {                            // If step is with IRQ on falling edge, ACO should be 0
-      if (0 != (acStatus & (1<<ACO))) --i;  // If ACO is 1, check again
+      if (0 != (ACSR & (1<<ACO))) --i;  // If ACO is 1, check again
       Serial.print("/^"); Serial.println(acStatus, BIN); Serial.flush();
     }
   }
